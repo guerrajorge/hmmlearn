@@ -226,7 +226,7 @@ class GaussianHMM(_BaseHMM):
 
         if 'c' in self.init_params or not hasattr(self, "covars_"):
 
-            n_filename = string.replace(filename, 'kmeans', 'cov')
+            n_filename = string.replace(filepath, 'kmeans', 'cov')
             if run_kmeans_cov:
                 print('\tstarting calculating covariances')
                 cv = np.cov(X.T)
