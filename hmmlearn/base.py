@@ -3,7 +3,7 @@ from __future__ import print_function
 import string
 import sys
 from collections import deque
-
+from time import gmtime, strftime
 import numpy as np
 from scipy.misc import logsumexp
 from sklearn.base import BaseEstimator, _pprint
@@ -395,7 +395,7 @@ class _BaseHMM(BaseEstimator):
 
         return np.atleast_2d(X), np.array(state_sequence, dtype=int)
 
-    def fit(self, X, lengths=None):
+    def fit(self, X, user, activity, lengths=None):
         """Estimate model parameters.
 
         An initialization step is performed before entering the
@@ -417,22 +417,23 @@ class _BaseHMM(BaseEstimator):
         self : object
             Returns self.
         """
-        X = check_array(X)
-        self._init(X, lengths=lengths)
+        # X = check_array(X)
+        self._init(X, user, activity, lengths=lengths)
         self._check()
 
         self.monitor_ = ConvergenceMonitor(self.tol, self.n_iter, self.verbose)
+        print('\tstarting hmm calculations time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         for iter in range(self.n_iter):
             stats = self._initialize_sufficient_statistics()
             curr_logprob = 0
             for i, j in iter_from_X_lengths(X, lengths):
-                framelogprob = self._compute_log_likelihood(X[i:j])
+                framelogprob = self._compute_log_likelihood(X)
                 logprob, fwdlattice = self._do_forward_pass(framelogprob)
                 curr_logprob += logprob
                 bwdlattice = self._do_backward_pass(framelogprob)
                 posteriors = self._compute_posteriors(fwdlattice, bwdlattice)
                 self._accumulate_sufficient_statistics(
-                    stats, X[i:j], framelogprob, posteriors, fwdlattice,
+                    stats, X, framelogprob, posteriors, fwdlattice,
                     bwdlattice)
 
             # XXX must be before convergence check, because otherwise
@@ -443,6 +444,7 @@ class _BaseHMM(BaseEstimator):
             if self.monitor_.converged:
                 break
 
+        print('\tfinished hmm calculations time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         return self
 
     def _do_viterbi_pass(self, framelogprob):

@@ -10,6 +10,10 @@
 The :mod:`hmmlearn.hmm` module implements hidden Markov models.
 """
 
+import os
+import string
+from time import gmtime, strftime
+from sklearn.externals import joblib
 import numpy as np
 from sklearn import cluster
 from sklearn.mixture import (
@@ -139,6 +143,7 @@ class GaussianHMM(_BaseHMM):
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
 
+
     def _get_covars(self):
         """Return covars as a full matrix."""
         if self.covariance_type == 'full':
@@ -169,21 +174,67 @@ class GaussianHMM(_BaseHMM):
         _validate_covars(self._covars_, self.covariance_type,
                          self.n_components)
 
-    def _init(self, X, lengths=None):
+    def _init(self, X, user, activity, lengths=None):
         super(GaussianHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
+        n_features -= 1
         if hasattr(self, 'n_features') and self.n_features != n_features:
             raise ValueError('Unexpected number of dimensions, got %s but '
                              'expected %s' % (n_features, self.n_features))
 
         self.n_features = n_features
+
+        run_kmeans_cov = True
+        filename = ''
+        filepath = ''
+
         if 'm' in self.init_params or not hasattr(self, "means_"):
-            kmeans = cluster.KMeans(n_clusters=self.n_components)
-            kmeans.fit(X)
+
+            # list all the files where the sensordata is stored
+            kmeans_dir = '/Users/jguerra/PycharmProjects/imu/data'
+            dataset_files = os.listdir(kmeans_dir)
+            # if file with the same activity exists, do not run kmeans
+            for data_file in dataset_files:
+                if ('.npy' not in data_file) and (activity in data_file):
+                    run_kmeans_cov = False
+                    filename = data_file
+                    filepath = os.path.join(kmeans_dir, filename)
+
+            if run_kmeans_cov:
+                print('\tstarting training k-means model time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+                kmeans = cluster.KMeans(n_clusters=self.n_components)
+                kmeans.fit(X)
+                print('\tfinished training k-means model time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+                filename = 'kmeans' + '_' + user + '_' + activity + '_' + strftime("%Y%m%d%H%M%S", gmtime())
+                print('\tkmeans object saved as {0}'.format(filename))
+                # save the file
+                filepath = os.path.join(kmeans_dir, filename)  
+                joblib.dump(kmeans, filepath, compress=1)
+            
+            # load existing file
+            else:
+                print('\tloading k-means object {0}'.format(filename))
+                kmeans = joblib.load(filepath) 
+                print('\tfinished loading k-means object')
+
+            if kmeans == '':
+                print('\tError while loading object')
+                exit(1)
+
             self.means_ = kmeans.cluster_centers_
+
         if 'c' in self.init_params or not hasattr(self, "covars_"):
-            cv = np.cov(X.T)
+
+            n_filename = string.replace(filename, 'kmeans', 'cov')
+            if run_kmeans_cov:
+                print('\tstarting calculating covariances')
+                cv = np.cov(X.T)
+                print('\tfinished calculating covariances')
+                joblib.dump(cv, n_filename, compress=1)
+            else:
+                cv = joblib.load(n_filename)
+
             if not cv.shape:
                 cv.shape = (1, 1)
             self._covars_ = distribute_covar_matrix_to_match_covariance_type(
@@ -191,6 +242,7 @@ class GaussianHMM(_BaseHMM):
             self._covars_ = self._covars_.copy()
             if self._covars_.any() == 0:
                 self._covars_[self._covars_ == 0] = 1e-5
+
 
     def _compute_log_likelihood(self, X):
         return log_multivariate_normal_density(

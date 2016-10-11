@@ -46,3 +46,5 @@ nosetests.xml
 .#*
 *.swp
 *.swo
+
+.idea
