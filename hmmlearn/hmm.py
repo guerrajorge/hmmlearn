@@ -203,7 +203,7 @@ class GaussianHMM(_BaseHMM):
 
             if run_kmeans_cov:
                 print('\tstarting training k-means model time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-                kmeans = cluster.KMeans(n_clusters=self.n_components)
+                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
                 kmeans.fit(X)
                 print('\tfinished training k-means model time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
                 filename = 'kmeans' + '_' + user + '_' + activity + '_' + strftime("%Y%m%d%H%M%S", gmtime())
