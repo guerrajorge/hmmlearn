@@ -3,7 +3,7 @@ from __future__ import print_function
 import string
 import sys
 from collections import deque
-from time import gmtime, strftime
+from datetime import datetime
 import numpy as np
 from scipy.misc import logsumexp
 from sklearn.base import BaseEstimator, _pprint
@@ -422,7 +422,7 @@ class _BaseHMM(BaseEstimator):
         self._check()
 
         self.monitor_ = ConvergenceMonitor(self.tol, self.n_iter, self.verbose)
-        print('\tstarting hmm calculations time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        print('\tstarting hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         for iter in range(self.n_iter):
             stats = self._initialize_sufficient_statistics()
             curr_logprob = 0
@@ -444,7 +444,7 @@ class _BaseHMM(BaseEstimator):
             if self.monitor_.converged:
                 break
 
-        print('\tfinished hmm calculations time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        print('\tfinished hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return self
 
     def _do_viterbi_pass(self, framelogprob):

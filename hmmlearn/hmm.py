@@ -12,7 +12,7 @@ The :mod:`hmmlearn.hmm` module implements hidden Markov models.
 
 import os
 import string
-from time import gmtime, strftime
+from datetime import datetime
 from sklearn.externals import joblib
 import numpy as np
 from sklearn import cluster
@@ -196,21 +196,21 @@ class GaussianHMM(_BaseHMM):
             dataset_files = os.listdir(kmeans_dir)
             # if file with the same activity exists, do not run kmeans
             for data_file in dataset_files:
-                if ('.npy' not in data_file) and (activity in data_file):
+                if ('.npy' not in data_file) and (activity in data_file) and ('kmeans' in data_file):
                     run_kmeans_cov = False
                     filename = data_file
                     filepath = os.path.join(kmeans_dir, filename)
 
             if run_kmeans_cov:
-                print('\tstarting training k-means model time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
+                print('\tstarting training k-means model time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1, verbose=1)
                 kmeans.fit(X)
-                print('\tfinished training k-means model time:{0}'.format(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-                filename = 'kmeans' + '_' + user + '_' + activity + '_' + strftime("%Y%m%d%H%M%S", gmtime())
+                print('\tfinished training k-means model time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                filename = 'kmeans' + '_' + user + '_' + activity + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
                 print('\tkmeans object saved as {0}'.format(filename))
                 # save the file
                 filepath = os.path.join(kmeans_dir, filename)  
-                joblib.dump(kmeans, filepath, compress=1)
+                joblib.dump(kmeans, filepath)
             
             # load existing file
             else:
@@ -219,7 +219,7 @@ class GaussianHMM(_BaseHMM):
                 print('\tfinished loading k-means object')
 
             if kmeans == '':
-                print('\tError while loading object')
+                print('\tError while loading kmeans object')
                 exit(1)
 
             self.means_ = kmeans.cluster_centers_
@@ -228,10 +228,10 @@ class GaussianHMM(_BaseHMM):
 
             n_filename = string.replace(filepath, 'kmeans', 'cov')
             if run_kmeans_cov:
-                print('\tstarting calculating covariances')
+                print('\tstarting calculating covariances time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
                 cv = np.cov(X.T)
-                print('\tfinished calculating covariances')
-                joblib.dump(cv, n_filename, compress=1)
+                print('\tfinished calculating covariances time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                joblib.dump(cv, n_filename)
             else:
                 cv = joblib.load(n_filename)
 
@@ -242,7 +242,6 @@ class GaussianHMM(_BaseHMM):
             self._covars_ = self._covars_.copy()
             if self._covars_.any() == 0:
                 self._covars_[self._covars_ == 0] = 1e-5
-
 
     def _compute_log_likelihood(self, X):
         return log_multivariate_normal_density(
