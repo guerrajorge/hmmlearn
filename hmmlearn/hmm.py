@@ -10,6 +10,7 @@
 The :mod:`hmmlearn.hmm` module implements hidden Markov models.
 """
 
+import sys
 import os
 import string
 from datetime import datetime
@@ -189,7 +190,8 @@ class GaussianHMM(_BaseHMM):
         filepath = ''
 
         # list all the files where the sensordata is stored
-        kmeans_cov_dir = '/Users/jguerra/PycharmProjects/imu/data'
+        current_path = sys.argv[0].split('/')[0:-1]
+        kmeans_cov_dir = '/'.join(current_path) + '/data'
 
         if 'm' in self.init_params or not hasattr(self, "means_"):
 
