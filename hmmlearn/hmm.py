@@ -223,7 +223,7 @@ class GaussianHMM(_BaseHMM):
             else:
                 print('\tloading k-means object {0}'.format(filename))
                 kmeans = joblib.load(filepath) 
-                print('\tfinished loading k-means object')
+                print('\tfinished loading k-means object time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             if kmeans == '':
                 print('\tError while loading kmeans object')
@@ -235,16 +235,20 @@ class GaussianHMM(_BaseHMM):
 
             n_filename = string.replace(filepath, 'kmeans', 'cov')
             if run_kmeans_cov:
-                print('\tstarting calculating covariances time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                print('\tstarting calculating covariances time:{0}'.format(
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 cv = np.cov(X.T)
-                print('\tfinished calculating covariances time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                print('\tfinished calculating covariances time:{0}'.format(
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 if not os.path.exists(kmeans_cov_dir):
                     os.mkdir(kmeans_cov_dir)
                 joblib.dump(cv, n_filename)
             else:
-                print('\tstarting loading covs object {0}'.format(n_filename))
+                print('\tstarting loading covs object {0} at time:{0}'.format(n_filename),
+                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 cv = joblib.load(n_filename)
-                print('\tfinished loading covs object {0}'.format(n_filename))
+                print('\tfinished loading covs object {0} at time:{0}'.format(n_filename),
+                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
             if not cv.shape:
                 cv.shape = (1, 1)

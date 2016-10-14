@@ -3,15 +3,16 @@ from __future__ import print_function
 import string
 import sys
 from collections import deque
-from datetime import datetime
+
 import numpy as np
 from scipy.misc import logsumexp
 from sklearn.base import BaseEstimator, _pprint
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils.validation import check_is_fitted
+from datetime import datetime
 
 from . import _hmmc
-from .utils import normalize, log_normalize, iter_from_X_lengths
+from .utils import normalize, log_normalize, iter_from_X_lengths, log_mask_zero
 
 
 #: Supported decoder algorithms.
@@ -395,7 +396,7 @@ class _BaseHMM(BaseEstimator):
 
         return np.atleast_2d(X), np.array(state_sequence, dtype=int)
 
-    def fit(self, X, user, activity, lengths=None):
+    def fit(self, X, lengths=None):
         """Estimate model parameters.
 
         An initialization step is performed before entering the
@@ -417,23 +418,23 @@ class _BaseHMM(BaseEstimator):
         self : object
             Returns self.
         """
-        # X = check_array(X)
-        self._init(X, user, activity, lengths=lengths)
+        X = check_array(X)
+        self._init(X, lengths=lengths)
         self._check()
 
-        self.monitor_ = ConvergenceMonitor(self.tol, self.n_iter, self.verbose)
         print('\tstarting hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        self.monitor_ = ConvergenceMonitor(self.tol, self.n_iter, self.verbose)
         for iter in range(self.n_iter):
             stats = self._initialize_sufficient_statistics()
             curr_logprob = 0
             for i, j in iter_from_X_lengths(X, lengths):
-                framelogprob = self._compute_log_likelihood(X)
+                framelogprob = self._compute_log_likelihood(X[i:j])
                 logprob, fwdlattice = self._do_forward_pass(framelogprob)
                 curr_logprob += logprob
                 bwdlattice = self._do_backward_pass(framelogprob)
                 posteriors = self._compute_posteriors(fwdlattice, bwdlattice)
                 self._accumulate_sufficient_statistics(
-                    stats, X, framelogprob, posteriors, fwdlattice,
+                    stats, X[i:j], framelogprob, posteriors, fwdlattice,
                     bwdlattice)
 
             # XXX must be before convergence check, because otherwise
@@ -444,22 +445,22 @@ class _BaseHMM(BaseEstimator):
             if self.monitor_.converged:
                 break
 
-        print('\tfinished hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        print('\tfinishing hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return self
 
     def _do_viterbi_pass(self, framelogprob):
         n_samples, n_components = framelogprob.shape
         state_sequence, logprob = _hmmc._viterbi(
-            n_samples, n_components, np.log(self.startprob_),
-            np.log(self.transmat_), framelogprob)
+            n_samples, n_components, log_mask_zero(self.startprob_),
+            log_mask_zero(self.transmat_), framelogprob)
         return logprob, state_sequence
 
     def _do_forward_pass(self, framelogprob):
         n_samples, n_components = framelogprob.shape
         fwdlattice = np.zeros((n_samples, n_components))
         _hmmc._forward(n_samples, n_components,
-                       np.log(self.startprob_),
-                       np.log(self.transmat_),
+                       log_mask_zero(self.startprob_),
+                       log_mask_zero(self.transmat_),
                        framelogprob, fwdlattice)
         return logsumexp(fwdlattice[-1]), fwdlattice
 
@@ -467,8 +468,8 @@ class _BaseHMM(BaseEstimator):
         n_samples, n_components = framelogprob.shape
         bwdlattice = np.zeros((n_samples, n_components))
         _hmmc._backward(n_samples, n_components,
-                        np.log(self.startprob_),
-                        np.log(self.transmat_),
+                        log_mask_zero(self.startprob_),
+                        log_mask_zero(self.transmat_),
                         framelogprob, bwdlattice)
         return bwdlattice
 
@@ -623,7 +624,7 @@ class _BaseHMM(BaseEstimator):
 
             lneta = np.zeros((n_samples - 1, n_components, n_components))
             _hmmc._compute_lneta(n_samples, n_components, fwdlattice,
-                                 np.log(self.transmat_),
+                                 log_mask_zero(self.transmat_),
                                  bwdlattice, framelogprob, lneta)
             stats['trans'] += np.exp(logsumexp(lneta, axis=0))
 
