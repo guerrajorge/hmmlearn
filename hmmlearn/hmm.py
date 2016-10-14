@@ -204,10 +204,10 @@ class GaussianHMM(_BaseHMM):
                         filepath = os.path.join(kmeans_cov_dir, filename)
 
             if run_kmeans_cov:
-                print('\tstarting training k-means model time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                print('\tstarting training k-means model time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
                 kmeans.fit(X)
-                print('\tfinished training k-means model time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                print('\tfinished training k-means model time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 filename = 'kmeans' + '_' + user + '_' + activity + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
                 print('\tkmeans object saved as {0}'.format(filename))
                 # save the file
@@ -233,9 +233,9 @@ class GaussianHMM(_BaseHMM):
 
             n_filename = string.replace(filepath, 'kmeans', 'cov')
             if run_kmeans_cov:
-                print('\tstarting calculating covariances time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                print('\tstarting calculating covariances time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 cv = np.cov(X.T)
-                print('\tfinished calculating covariances time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                print('\tfinished calculating covariances time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 if not os.path.exists(kmeans_cov_dir):
                     os.mkdir(kmeans_cov_dir)
                 joblib.dump(cv, n_filename)
