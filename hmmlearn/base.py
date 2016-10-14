@@ -396,7 +396,7 @@ class _BaseHMM(BaseEstimator):
 
         return np.atleast_2d(X), np.array(state_sequence, dtype=int)
 
-    def fit(self, X, lengths=None):
+    def fit(self, X, user, activity, data_dir, lengths=None):
         """Estimate model parameters.
 
         An initialization step is performed before entering the
@@ -419,7 +419,7 @@ class _BaseHMM(BaseEstimator):
             Returns self.
         """
         X = check_array(X)
-        self._init(X, lengths=lengths)
+        self._init(X, user, activity, data_dir, lengths=lengths)
         self._check()
 
         print('\tstarting hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -445,7 +445,7 @@ class _BaseHMM(BaseEstimator):
             if self.monitor_.converged:
                 break
 
-        print('\tfinishing hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        print('\tfinished hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return self
 
     def _do_viterbi_pass(self, framelogprob):

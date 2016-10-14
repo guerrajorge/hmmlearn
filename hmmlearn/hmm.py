@@ -175,7 +175,7 @@ class GaussianHMM(_BaseHMM):
         _validate_covars(self._covars_, self.covariance_type,
                          self.n_components)
 
-    def _init(self, X, user, activity, lengths=None):
+    def _init(self, X, user, activity, data_dir, lengths=None):
         super(GaussianHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
@@ -190,8 +190,7 @@ class GaussianHMM(_BaseHMM):
         filepath = ''
 
         # list all the files where the sensordata is stored
-        current_path = sys.argv[0].split('/')[0:-1]
-        kmeans_cov_dir = '/'.join(current_path) + '/data'
+        kmeans_cov_dir = data_dir
 
         if 'm' in self.init_params or not hasattr(self, "means_"):
 
