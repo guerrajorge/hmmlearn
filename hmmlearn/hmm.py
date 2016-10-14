@@ -178,7 +178,6 @@ class GaussianHMM(_BaseHMM):
         super(GaussianHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
-        n_features -= 1
         if hasattr(self, 'n_features') and self.n_features != n_features:
             raise ValueError('Unexpected number of dimensions, got %s but '
                              'expected %s' % (n_features, self.n_features))
@@ -189,27 +188,33 @@ class GaussianHMM(_BaseHMM):
         filename = ''
         filepath = ''
 
+        # list all the files where the sensordata is stored
+        kmeans_cov_dir = '/Users/jguerra/PycharmProjects/imu/data'
+
         if 'm' in self.init_params or not hasattr(self, "means_"):
 
-            # list all the files where the sensordata is stored
-            kmeans_dir = '/Users/jguerra/PycharmProjects/imu/data'
-            dataset_files = os.listdir(kmeans_dir)
-            # if file with the same activity exists, do not run kmeans
-            for data_file in dataset_files:
-                if ('.npy' not in data_file) and (activity in data_file) and ('kmeans' in data_file):
-                    run_kmeans_cov = False
-                    filename = data_file
-                    filepath = os.path.join(kmeans_dir, filename)
+            if os.path.exists(kmeans_cov_dir):
+                dataset_files = os.listdir(kmeans_cov_dir)
+                # if file with the same activity exists, do not run kmeans
+                for data_file in dataset_files:
+                    if ('.npy' not in data_file) and (activity in data_file) and (user in data_file) and \
+                            ('kmeans' in data_file):
+                        run_kmeans_cov = False
+                        filename = data_file
+                        filepath = os.path.join(kmeans_cov_dir, filename)
 
             if run_kmeans_cov:
                 print('\tstarting training k-means model time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
-                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1, verbose=1)
+                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
                 kmeans.fit(X)
                 print('\tfinished training k-means model time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
                 filename = 'kmeans' + '_' + user + '_' + activity + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
                 print('\tkmeans object saved as {0}'.format(filename))
                 # save the file
-                filepath = os.path.join(kmeans_dir, filename)  
+                filepath = os.path.join(kmeans_cov_dir, filename)
+
+                if not os.path.exists(kmeans_cov_dir):
+                    os.mkdir(kmeans_cov_dir)
                 joblib.dump(kmeans, filepath)
             
             # load existing file
@@ -231,9 +236,13 @@ class GaussianHMM(_BaseHMM):
                 print('\tstarting calculating covariances time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
                 cv = np.cov(X.T)
                 print('\tfinished calculating covariances time:{0}'.format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                if not os.path.exists(kmeans_cov_dir):
+                    os.mkdir(kmeans_cov_dir)
                 joblib.dump(cv, n_filename)
             else:
+                print('\tstarting loading covs object {0}'.format(n_filename))
                 cv = joblib.load(n_filename)
+                print('\tfinished loading covs object {0}'.format(n_filename))
 
             if not cv.shape:
                 cv.shape = (1, 1)
