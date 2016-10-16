@@ -396,7 +396,7 @@ class _BaseHMM(BaseEstimator):
 
         return np.atleast_2d(X), np.array(state_sequence, dtype=int)
 
-    def fit(self, X, user, activity, data_dir, lengths=None):
+    def fit(self, X, user, activity, data_dir, quickrun, lengths=None):
         """Estimate model parameters.
 
         An initialization step is performed before entering the
@@ -419,7 +419,7 @@ class _BaseHMM(BaseEstimator):
             Returns self.
         """
         X = check_array(X)
-        self._init(X, user, activity, data_dir, lengths=lengths)
+        self._init(X, user, activity, data_dir, quickrun, lengths=lengths)
         self._check()
 
         print('\tstarting hmm calculations time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))

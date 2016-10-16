@@ -175,7 +175,7 @@ class GaussianHMM(_BaseHMM):
         _validate_covars(self._covars_, self.covariance_type,
                          self.n_components)
 
-    def _init(self, X, user, activity, data_dir, lengths=None):
+    def _init(self, X, user, activity, data_dir, quickrun, lengths=None):
         super(GaussianHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
@@ -194,15 +194,16 @@ class GaussianHMM(_BaseHMM):
 
         if 'm' in self.init_params or not hasattr(self, "means_"):
 
-            if os.path.exists(kmeans_cov_dir):
-                dataset_files = os.listdir(kmeans_cov_dir)
-                # if file with the same activity exists, do not run kmeans
-                for data_file in dataset_files:
-                    if ('.npy' not in data_file) and (activity in data_file) and (user in data_file) and \
-                            ('kmeans' in data_file):
-                        run_kmeans_cov = False
-                        filename = data_file
-                        filepath = os.path.join(kmeans_cov_dir, filename)
+            if quickrun:
+                if os.path.exists(kmeans_cov_dir):
+                    dataset_files = os.listdir(kmeans_cov_dir)
+                    # if file with the same activity exists, do not run kmeans
+                    for data_file in dataset_files:
+                        if ('.npy' not in data_file) and (activity in data_file) and (user in data_file) and \
+                                ('kmeans' in data_file):
+                            run_kmeans_cov = False
+                            filename = data_file
+                            filepath = os.path.join(kmeans_cov_dir, filename)
 
             if run_kmeans_cov:
                 print('\tstarting training k-means model time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
