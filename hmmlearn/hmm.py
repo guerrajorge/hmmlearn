@@ -210,14 +210,16 @@ class GaussianHMM(_BaseHMM):
                 kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
                 kmeans.fit(X)
                 print('\tfinished training k-means model time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-                filename = 'kmeans' + '_' + user + '_' + activity + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
-                print('\tkmeans object saved as {0}'.format(filename))
-                # save the file
-                filepath = os.path.join(kmeans_cov_dir, filename)
 
-                if not os.path.exists(kmeans_cov_dir):
-                    os.mkdir(kmeans_cov_dir)
-                joblib.dump(kmeans, filepath)
+                if quickrun:
+                    filename = 'kmeans' + '_' + user + '_' + activity + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
+                    print('\tkmeans object saved as {0}'.format(filename))
+                    # save the file
+                    filepath = os.path.join(kmeans_cov_dir, filename)
+
+                    if not os.path.exists(kmeans_cov_dir):
+                        os.mkdir(kmeans_cov_dir)
+                    joblib.dump(kmeans, filepath)
             
             # load existing file
             else:
@@ -233,16 +235,19 @@ class GaussianHMM(_BaseHMM):
 
         if 'c' in self.init_params or not hasattr(self, "covars_"):
 
-            n_filename = string.replace(filepath, 'kmeans', 'cov')
+            if quickrun:
+                n_filename = string.replace(filepath, 'kmeans', 'cov')
+
             if run_kmeans_cov:
                 print('\tstarting calculating covariances time:{0}'.format(
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 cv = np.cov(X.T)
                 print('\tfinished calculating covariances time:{0}'.format(
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-                if not os.path.exists(kmeans_cov_dir):
-                    os.mkdir(kmeans_cov_dir)
-                joblib.dump(cv, n_filename)
+                if quickrun:
+                    if not os.path.exists(kmeans_cov_dir):
+                        os.mkdir(kmeans_cov_dir)
+                    joblib.dump(cv, n_filename)
             else:
                 print('\tstarting loading covs object {0} at time:{0}'.format(n_filename),
                       datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
