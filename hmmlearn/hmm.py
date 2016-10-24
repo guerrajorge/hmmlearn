@@ -10,7 +10,6 @@
 The :mod:`hmmlearn.hmm` module implements hidden Markov models.
 """
 
-import sys
 import os
 import string
 from datetime import datetime
@@ -175,7 +174,7 @@ class GaussianHMM(_BaseHMM):
         _validate_covars(self._covars_, self.covariance_type,
                          self.n_components)
 
-    def _init(self, X, user, activity, data_dir, quickrun, lengths=None):
+    def _init(self, X, user, activity, data_dir, quickrun, logger, lengths=None):
         super(GaussianHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
@@ -206,14 +205,16 @@ class GaussianHMM(_BaseHMM):
                             filepath = os.path.join(kmeans_cov_dir, filename)
 
             if run_kmeans_cov:
-                print('\tstarting training k-means model time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
+                logger.getLogger('tab.regular.time').info('starting training k-means model')
+                # kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
+                logger.getLogger('tab.regular').info('running \'MiniBatchKMeans\'')
+                kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=400)
                 kmeans.fit(X)
-                print('\tfinished training k-means model time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                logger.getLogger('tab.regular.time').info('finished training k-means model')
 
                 if quickrun:
                     filename = 'kmeans' + '_' + user + '_' + activity + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
-                    print('\tkmeans object saved as {0}'.format(filename))
+                    logger.getLogger('tab.regular.time').info('kmeans object saved as {0}'.format(filename))
                     # save the file
                     filepath = os.path.join(kmeans_cov_dir, filename)
 
@@ -223,12 +224,12 @@ class GaussianHMM(_BaseHMM):
             
             # load existing file
             else:
-                print('\tloading k-means object {0}'.format(filename))
+                logger.getLogger('tab.regular.time').info('loading k-means object {0}'.format(filename))
                 kmeans = joblib.load(filepath) 
-                print('\tfinished loading k-means object time:{0}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                logger.getLogger('tab.regular.time').info('finished loading k-means object')
 
             if kmeans == '':
-                print('\tError while loading kmeans object')
+                logger.getLogger('tab.regular').error('Error while loading kmeans object')
                 exit(1)
 
             self.means_ = kmeans.cluster_centers_
@@ -239,21 +240,17 @@ class GaussianHMM(_BaseHMM):
                 n_filename = string.replace(filepath, 'kmeans', 'cov')
 
             if run_kmeans_cov:
-                print('\tstarting calculating covariances time:{0}'.format(
-                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                logger.getLogger('tab.regular.time').info('starting calculating covariances')
                 cv = np.cov(X.T)
-                print('\tfinished calculating covariances time:{0}'.format(
-                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                logger.getLogger('tab.regular.time').info('finished calculating covariances')
                 if quickrun:
                     if not os.path.exists(kmeans_cov_dir):
                         os.mkdir(kmeans_cov_dir)
                     joblib.dump(cv, n_filename)
             else:
-                print('\tstarting loading covs object {0} at time:{0}'.format(n_filename),
-                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                logger.getLogger('tab.regular.time').info('starting loading covs object {0}'.format(n_filename))
                 cv = joblib.load(n_filename)
-                print('\tfinished loading covs object {0} at time:{0}'.format(n_filename),
-                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                logger.getLogger('tab.regular.time').info('finished loading covs object {0}'.format(n_filename))
 
             if not cv.shape:
                 cv.shape = (1, 1)
