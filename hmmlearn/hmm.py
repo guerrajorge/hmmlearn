@@ -622,7 +622,7 @@ class GMMHMM(_BaseHMM):
                 gmm = GMM(n_mix, covariance_type=covariance_type)
             self.gmms_.append(gmm)
 
-    def _init(self, X, lengths=None):
+    def _init(self, X, user, activity, data_dir, quickrun, logger, lengths=None):
         super(GMMHMM, self)._init(X, lengths=lengths)
 
         for g in self.gmms_:
