@@ -624,9 +624,10 @@ class GMMHMM(_BaseHMM):
     def _init(self, X, user, activity, data_dir, quickrun, logger, lengths=None):
         super(GMMHMM, self)._init(X, lengths=lengths)
 
-        for g in self.gmms_:
+        for index, g in enumerate(self.gmms_):
             g.set_params(init_params=self.init_params, n_iter=0)
-            g.fit(X, user, activity, data_dir, quickrun, logger)
+            g.fit(X, user=user, activity=activity, data_dir=data_dir, quickrun=quickrun, logger=logger,
+                  index=str(index))
 
     def _compute_log_likelihood(self, X):
         return np.array([g.score(X) for g in self.gmms_]).T
