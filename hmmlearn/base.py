@@ -418,7 +418,7 @@ class _BaseHMM(BaseEstimator):
         self : object
             Returns self.
         """
-        X = check_array(X)
+        # X = check_array(X)
         self._init(X, user, activity, data_dir, quickrun, logger, lengths=lengths)
         self._check()
 

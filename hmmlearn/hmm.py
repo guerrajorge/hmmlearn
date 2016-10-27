@@ -143,7 +143,6 @@ class GaussianHMM(_BaseHMM):
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
 
-
     def _get_covars(self):
         """Return covars as a full matrix."""
         if self.covariance_type == 'full':
@@ -206,9 +205,9 @@ class GaussianHMM(_BaseHMM):
 
             if run_kmeans_cov:
                 logger.getLogger('tab.regular.time').info('starting training k-means model')
-                # kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
-                logger.getLogger('tab.regular').info('running \'MiniBatchKMeans\'')
-                kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=400)
+                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
+                # logger.getLogger('tab.regular').info('running \'MiniBatchKMeans\'')
+                # kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=400)
                 kmeans.fit(X)
                 logger.getLogger('tab.regular.time').info('finished training k-means model')
 
@@ -627,7 +626,7 @@ class GMMHMM(_BaseHMM):
 
         for g in self.gmms_:
             g.set_params(init_params=self.init_params, n_iter=0)
-            g.fit(X)
+            g.fit(X, user, activity, data_dir, quickrun, logger)
 
     def _compute_log_likelihood(self, X):
         return np.array([g.score(X) for g in self.gmms_]).T
