@@ -173,7 +173,7 @@ class GaussianHMM(_BaseHMM):
         _validate_covars(self._covars_, self.covariance_type,
                          self.n_components)
 
-    def _init(self, X, user, activity, data_dir, quickrun, logger, lengths=None):
+    def _init(self, X, user, activity, data_dir, quickrun, logger, kmeans_opt, lengths=None):
         super(GaussianHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
@@ -204,10 +204,14 @@ class GaussianHMM(_BaseHMM):
                             filepath = os.path.join(kmeans_cov_dir, filename)
 
             if run_kmeans_cov:
-                # logger.getLogger('tab.regular.time').info('starting training k-means model')
-                # kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
-                logger.getLogger('tab.regular').info('starting training Mini Batch KMeans model')
-                kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=1000000)
+                if kmeans_opt == 'REGULAR' or kmeans_opt == '':
+                    logger.getLogger('tab.regular.time').info('starting training k-means model')
+                    kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
+                else:
+                    logger.getLogger('tab.regular').info('starting training Mini Batch KMeans model')
+                    kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=1000000,
+                                                     compute_labels=False)
+
                 kmeans.fit(X)
                 logger.getLogger('tab.regular.time').info('finished training k-means model')
 
