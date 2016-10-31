@@ -204,10 +204,10 @@ class GaussianHMM(_BaseHMM):
                             filepath = os.path.join(kmeans_cov_dir, filename)
 
             if run_kmeans_cov:
-                logger.getLogger('tab.regular.time').info('starting training k-means model')
-                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
-                # logger.getLogger('tab.regular').info('running \'MiniBatchKMeans\'')
-                # kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=400)
+                # logger.getLogger('tab.regular.time').info('starting training k-means model')
+                # kmeans = cluster.KMeans(n_clusters=self.n_components)
+                logger.getLogger('tab.regular').info('running \'MiniBatchKMeans\'')
+                kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=1000000)
                 kmeans.fit(X)
                 logger.getLogger('tab.regular.time').info('finished training k-means model')
 
