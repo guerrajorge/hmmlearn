@@ -204,10 +204,10 @@ class GaussianHMM(_BaseHMM):
                             filepath = os.path.join(kmeans_cov_dir, filename)
 
             if run_kmeans_cov:
-                logger.getLogger('tab.regular.time').info('starting training k-means model')
-                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
-                # logger.getLogger('tab.regular').info('running \'MiniBatchKMeans\'')
-                # kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=400)
+                # logger.getLogger('tab.regular.time').info('starting training k-means model')
+                # kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
+                logger.getLogger('tab.regular').info('starting training Mini Batch KMeans model')
+                kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=1000000)
                 kmeans.fit(X)
                 logger.getLogger('tab.regular.time').info('finished training k-means model')
 
@@ -240,7 +240,7 @@ class GaussianHMM(_BaseHMM):
 
             if run_kmeans_cov:
                 logger.getLogger('tab.regular.time').info('starting calculating covariances')
-                cv = np.cov(X.T)
+                cv = np.cov(X[:].T)
                 logger.getLogger('tab.regular.time').info('finished calculating covariances')
                 if quickrun:
                     if not os.path.exists(kmeans_cov_dir):
