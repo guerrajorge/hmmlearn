@@ -205,13 +205,14 @@ class GaussianHMM(_BaseHMM):
 
             if run_kmeans_cov:
                 if kmeans_opt == 'REGULAR' or kmeans_opt == '':
-                    logger.getLogger('tab.regular.time').info('starting training k-means model')
-                    kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=-1)
+                    logger.getLogger('tab.regular').info('using K-means model')
+                    kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=4, verbose=True)
                 else:
-                    logger.getLogger('tab.regular').info('starting training Mini Batch KMeans model')
+                    logger.getLogger('tab.regular').info('using Mini Batch K-Means model')
                     kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=1000000,
-                                                     compute_labels=False)
+                                                     compute_labels=False, verbose=True)
 
+                logger.getLogger('tab.regular.time').info('starting training model')
                 kmeans.fit(X)
                 logger.getLogger('tab.regular.time').info('finished training k-means model')
 
