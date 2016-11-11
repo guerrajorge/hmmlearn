@@ -173,7 +173,7 @@ class GaussianHMM(_BaseHMM):
         _validate_covars(self._covars_, self.covariance_type,
                          self.n_components)
 
-    def _init(self, X, user, activity, data_dir, quickrun, logger, kmeans_opt, lengths=None):
+    def _init(self, X, logger, kmeans_opt, lengths=None):
         super(GaussianHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
@@ -183,78 +183,26 @@ class GaussianHMM(_BaseHMM):
 
         self.n_features = n_features
 
-        run_kmeans_cov = True
-        filename = ''
-        filepath = ''
-
-        # list all the files where the sensordata is stored
-        kmeans_cov_dir = data_dir
-
         if 'm' in self.init_params or not hasattr(self, "means_"):
 
-            if quickrun:
-                if os.path.exists(kmeans_cov_dir):
-                    dataset_files = os.listdir(kmeans_cov_dir)
-                    # if file with the same activity exists, do not run kmeans
-                    for data_file in dataset_files:
-                        if ('.npy' not in data_file) and (activity in data_file) and (user in data_file) and \
-                                ('kmeans' in data_file):
-                            run_kmeans_cov = False
-                            filename = data_file
-                            filepath = os.path.join(kmeans_cov_dir, filename)
-
-            if run_kmeans_cov:
-                if kmeans_opt == 'REGULAR' or kmeans_opt == '':
-                    logger.getLogger('tab.regular').info('using K-means model')
-                    kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=4, verbose=True)
-                else:
-                    logger.getLogger('tab.regular').info('using Mini Batch K-Means model')
-                    kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=1000000,
-                                                     compute_labels=False, verbose=True)
-
-                logger.getLogger('tab.regular.time').info('starting training model')
-                kmeans.fit(X)
-                logger.getLogger('tab.regular.time').info('finished training k-means model')
-
-                if quickrun:
-                    filename = 'kmeans' + '_' + user + '_' + activity + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
-                    logger.getLogger('tab.regular.time').info('kmeans object saved as {0}'.format(filename))
-                    # save the file
-                    filepath = os.path.join(kmeans_cov_dir, filename)
-
-                    if not os.path.exists(kmeans_cov_dir):
-                        os.mkdir(kmeans_cov_dir)
-                    joblib.dump(kmeans, filepath)
-            
-            # load existing file
+            if kmeans_opt == 'REGULAR' or kmeans_opt == '':
+                logger.getLogger('tab.regular').info('using K-means model')
+                kmeans = cluster.KMeans(n_clusters=self.n_components, n_jobs=4, verbose=True)
             else:
-                logger.getLogger('tab.regular.time').info('loading k-means object {0}'.format(filename))
-                kmeans = joblib.load(filepath) 
-                logger.getLogger('tab.regular.time').info('finished loading k-means object')
+                logger.getLogger('tab.regular').info('using Mini Batch K-Means model')
+                kmeans = cluster.MiniBatchKMeans(n_clusters=self.n_components, batch_size=1000000,
+                                                 compute_labels=False, verbose=True)
 
-            if kmeans == '':
-                logger.getLogger('tab.regular').error('Error while loading kmeans object')
-                exit(1)
+            logger.getLogger('tab.regular.time').info('starting training model')
+            kmeans.fit(X)
+            logger.getLogger('tab.regular.time').info('finished training k-means model')
 
             self.means_ = kmeans.cluster_centers_
 
         if 'c' in self.init_params or not hasattr(self, "covars_"):
-
-            if quickrun:
-                n_filename = string.replace(filepath, 'kmeans', 'cov')
-
-            if run_kmeans_cov:
-                logger.getLogger('tab.regular.time').info('starting calculating covariances')
-                cv = np.cov(X[:].T)
-                logger.getLogger('tab.regular.time').info('finished calculating covariances')
-                if quickrun:
-                    if not os.path.exists(kmeans_cov_dir):
-                        os.mkdir(kmeans_cov_dir)
-                    joblib.dump(cv, n_filename)
-            else:
-                logger.getLogger('tab.regular.time').info('starting loading covs object {0}'.format(n_filename))
-                cv = joblib.load(n_filename)
-                logger.getLogger('tab.regular.time').info('finished loading covs object {0}'.format(n_filename))
+            logger.getLogger('tab.regular.time').info('starting calculating covariances')
+            cv = np.cov(X[:].T)
+            logger.getLogger('tab.regular.time').info('finished calculating covariances')
 
             if not cv.shape:
                 cv.shape = (1, 1)
